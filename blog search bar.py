@@ -1,34 +1,35 @@
-#correct code for blog section search  bar with search bar
+from flask import Flask, render_template, request
 from googlesearch import search
 
-# Function to search for articles from a specific website based on multiple queries
-def search_articles_by_queries(site, queries, num_results=10):
-    results = []
+app = Flask(__name__)
+
+# Function to search for the top articles from a specific website based on a query
+def search_top_articles(site, query, num_results=10):
     try:
-        for query in queries:
-            for idx, url in enumerate(search(query + " site:" + site), start=1):
-                results.append(url)
-                if idx >= num_results:
-                    break
+        results = search(query + " site:" + site, num_results=num_results)
+        return list(results)
     except Exception as e:
         print("Error searching:", e)
-    return results
+        return []
 
-# Function to display search results
-def display_results(results):
-    for idx, url in enumerate(results, start=1):
-        print(f"{idx}. {url}")
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    results = []
+    if request.method == 'POST':
+        query = request.form['query']
+        websites = [
+            "https://medium.com/",
+            "https://www.analyticsvidhya.com/",
+            "https://twitter.com/",
+            "https://owasp.org/",
+            "https://thehackernews.com/",
+            "https://www.hackingarticles.in/",
+            "https://null-byte.wonderhowto.com/"
+        ]
+        for website in websites:
+            top_articles = search_top_articles(website, query, num_results=5)
+            results.extend(top_articles)
+    return render_template('index.html', results=results)
 
-# Get user input for the search query
-def get_search_query():
-    query = input("Enter the search query: ")
-    return query
-
-# Example usage
-if __name__ == "__main__":
-    websites = ["https://medium.com/", "https://www.analyticsvidhya.com/", "https://twitter.com/"]
-    queries = [get_search_query()]  # Get the search query from user input
-    max_results = 10
-    for website in websites:
-        search_results = search_articles_by_queries(website, queries, num_results=max_results)
-        display_results(search_results)
+if __name__ == '__main__':
+    app.run(debug=True)
